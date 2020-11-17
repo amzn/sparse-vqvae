@@ -34,13 +34,30 @@ We summarize the main contributions of this repository as follows:
 
 ## Dictionary Learning
 
-Explain FISTA vs OMP here
+This sparse coding problem involves integer programming over a non-covex L0 norm, and therefore is NP-hard.
+In practice, the solution is approximated using pursuit algorithms, where the atoms "compete" over which get to describe the input signal.
+Generally speaking, there are two flavours of pursuit algorithms: greedy and convex-relaxation.
+We provide one example from each family
 
-#### Task-Driven Dictionary Learning
+
+#### OMP
+
+This method approximates the exact L0 norm solution in a greedy manner, selecting the next atom with the smallest (angular) residual w.r.t. the current code. 
+The benefit here is that we have a guaranteed number of `K` non-zer0 elements after `K` iterations.
+On the other hand, the selection process makes the process itself less suitable for differentiable programming (aka back-prop).
 
 #### FISTA
 
-#### OMP
+Here, the L0 is relaxed to its nearest convex counterpart, the L1 norm which is treated as an additive penalty.
+The resulting LASSO problem is a convex one, and has several efficient methods to solve efficiently.
+The iterative nature of this methos allows unrolling its structure and approximating it using a neural net (see [LISTA](http://yann.lecun.com/exdb/publis/pdf/gregor-icml-10.pdf))
+The drawback here is that the resulting code can have arbitrary number of non-zero elements after a fixed number of iterations.
+
+#### Task-Driven Dictionary Learning
+
+Without going into too many details, this paper proposes a way to calculate the derivative of the spase coding problem with respect to the dictionary.
+This is opens the way for a bi-level optimisation procedure, where we optimize the result of an optimization process. 
+Using this method we can create a dictionary optimized for any task, specifically the one our vq-vae is meant to solve. 
 
 ## Applications
 
@@ -76,15 +93,25 @@ Highlight the different folders - emphasis on FISTAFunction and OMPFunction.
 
 1. Training the Sparse-VQVAE encoder-decoder:
 
-Currently this codebase supports CIFAR10 and ImageNet.
+Currently this codebase supports CIFAR10, CIFAR100, and ImageNet.
 
 * Train with original VQVAE:
-> python train_vqvae.py —dataset cifar10 —selection_fn vanilla —size 32 —normalize_embeddings
+```
+train_vqvae.py --experiment_name="experiment_vq" --selection_fn=vanilla 
+```
 
 * Train with FISTA sparse-coding:
-> python train_vqvae.py —dataset cifar10 —selection_fn vanilla —size 32 —normalize_embeddings
 
-* TBD: OMP
+```
+train_vqvae.py --experiment_name="experiment_fista" --selection_fn=fista 
+```
+
+* Train with OMP sparse-coding:
+
+```
+train_vqvae.py --experiment_name="experiment_omp" --selection_fn=fista --num_strides=2
+```
+
 
 2. Extract codes for stage 2 training
 
