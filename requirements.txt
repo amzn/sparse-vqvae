@@ -1,0 +1,4 @@
+torchvision==0.4.0
+tensorboardX==1.9
+tqdm
+sklearn
