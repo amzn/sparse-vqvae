@@ -66,7 +66,9 @@ Using this method we can create a dictionary optimized for any task, specificall
 
 ## Limitations
 
-Explain where work on this repo have halted.
+This reporistory contains research materials of an unpublished work.
+Training + Inference code based on FISTA and OMP over PyTorch is fully functional for compression use cases.
+PixelSnail synthesis functionality is partially supported.
 
 ## Installation
 
@@ -87,7 +89,38 @@ After cloning this repository:
 
 ## Project Structure
 
-Highlight the different folders - emphasis on FISTAFunction and OMPFunction.
+FISTAFunction and OMPFunction are fast GPU implementations of both algorithms over PyTorch.
+Practitioners are welcome to incorporate these functions into their repositories under the license terms of this repository.
+
+The rest of the project structure can be briefly described as such:
+
+* checkpoint/
+    * MODELS SAVED HERE for vanilla and pixelsnail (both), as well as args used to generate them.
+* models/
+    * fista_pixelsnail - the implementation of the modifier pixelsnail based on FISTA
+    * model_utils - contains functions for genrating VQVAE objects and loading datasets (CIFAR, imagenet..). All files are downloaded relative to the project path.
+    * pixelsnail - the original pixelsnail model. fista_pixelsnail overrides this model and adds additional heads. The vanilla model generates this model twice (top and bottom)
+    * quantizers - Contains only the stuff that generates quantized codes: FISTA, OMP and Vanilla VQVAE quantization.
+    * vqvae - composed of Encoder / Decoder. Of interest here: we can change the stride to achieve different effects (0 - for decompression ; 1- for vqvae vanilla ; 2 - for compression). The stride should change for both Encoder / Decoder
+* scripts/
+    * calculate_jpg_psnr - a standalone script, accepts a dataset (hardcoded cifar) and runs compression for multiple quality levels. Outputs the psnr..
+    * calculate_model_psnr - similar to the above, only this one receives a model as input and prints it’s compression psnr. Note we have our own manual calculation of PSNR here. FISTA converges for multiple images at the same time, so the slowest image in the batch determines the bottleneck speed. If we run with batch size 1 we’re faster and more accurate.
+    * extract_dataset_unlearned_encodings - skip that (was used for experiments on alpha).
+    * graph_psnr - takes the PSNR tables we’ve created and generates plots.
+    * hyperparameter_alpha_search - convergence of alpha related to amount of nonzeros - calculated twice for random data and second time for the script we’ve just skipped. Most probably we shouldn’t be touching this script..
+    * visualize_encodings - a visualization script Yiftach have created for himself. Here we take a model and a dataset, run the model over the dataset and save the output image, to test it’s still valid. If all goes well we shouldn’t be using this file..
+* utils/
+    * pyfista is implemented here, both. dictionary learning and 
+    * pyfista_test - generates fake data to train sparse coding.. We don’t do hyperparams search anymore so we have no additiona uses for this file.
+    * pyomp - Holds implementation of forwards for OMP for a single sample at a time (TODO: implement batch OMP if we want).
+    * util_funcs - lots of helper functions are stored here. Argument parsers are handled here, as well as seeding and experiments setup (general stuff like assigning an experiment name..)
+* dataset - all definitions for used datasets. These are definitions for datasets but there is nothing to configure here.
+* extract_code - main for extract_code (2nd step in the algorithm training..)
+* mt_sample - multi threaded sampling.. Currently broken. 
+* sample - receives a PixelSnail and starts generating images..
+* scheduler - Scheduling definitions for number of schedulers, when to save a checkpoint file.. etc..
+* train_fista_pixelsnail / train_pixelsnail / train_vqvae - all neural net trainers we support..
+* scheduler - Scheduling definitions for number of schedulers, when to save a checkpoint file.. Etc
 
 ## Usage
 
@@ -113,22 +146,14 @@ train_vqvae.py --experiment_name="experiment_omp" --selection_fn=fista --num_str
 ```
 
 
+For synthesis, additional steps are required:
+
 2. Extract codes for stage 2 training
 
 > python extract_code.py --ckpt checkpoint/[VQ-VAE CHECKPOINT] --name [LMDB NAME] [DATASET PATH]
 
-Or's note: this text is from the original VQVAE repo - applies to us?
 
 3. Stage 2 (PixelSNAIL)
 
 > python train_pixelsnail.py [LMDB NAME]
 
-Or's note: this text is from the original VQVAE repo - applies to us?
-
-## Samples
-
-### Stage 1
-
-Note: This is a training sample
-
-![Sample from Stage 1 (VQ-VAE)](stage1_sample.png)
