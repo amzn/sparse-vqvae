@@ -4,6 +4,9 @@ Experimental implementation for a sparse-dictionary based version of the VQ-VAE2
 
 This repository builds over PyTorch.
 
+## Authors
+Yiftach Ginger ([iftachg](https://github.com/iftachg)), Or Perel ([orperel](https://github.com/orperel)), Roee Litman ([rlit](https://github.com/rlit))
+
 ## Introduction
 
 VQ-VAE is a promising direction for image synthesis, that is completely separate from the GAN line of works.
